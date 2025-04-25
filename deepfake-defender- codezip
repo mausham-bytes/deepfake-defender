@@ -1,0 +1,102 @@
+import zipfile
+import os
+
+# Re-define paths after reset
+base_dir = "/mnt/data/deepfake-defender"
+demo_dir = f"{base_dir}/demo/static"
+
+# Create required directory structure
+os.makedirs(demo_dir, exist_ok=True)
+
+# Save the web UI file
+html_path = f"{demo_dir}/index.html"
+with open(html_path, "w", encoding="utf-8") as f:
+    f.write("""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jarvis Assistant</title>
+  <style>
+    body { font-family: sans-serif; background: #1e1e1e; color: white; margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; }
+    #chat { flex: 1; overflow-y: auto; padding: 20px; }
+    .msg { margin: 10px 0; }
+    .user { color: #00afff; }
+    .bot { color: #00ffaf; }
+    #form { display: flex; padding: 10px; background: #111; }
+    #input { flex: 1; padding: 10px; font-size: 16px; background: #222; border: none; color: white; }
+    #send { background: #00afff; border: none; color: white; padding: 10px 20px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div id="chat"></div>
+  <form id="form">
+    <input type="text" id="input" placeholder="Ask Jarvis..." autocomplete="off" />
+    <button id="send">Send</button>
+  </form>
+
+  <script>
+    const chat = document.getElementById('chat');
+    const form = document.getElementById('form');
+    const input = document.getElementById('input');
+
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      const text = input.value.trim();
+      if (!text) return;
+      addMessage('You', text, 'user');
+      input.value = '';
+
+      const res = await fetch('/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: text })
+      });
+      const data = await res.json();
+      addMessage('Jarvis', data.response, 'bot');
+    };
+
+    function addMessage(sender, text, cls) {
+      const div = document.createElement('div');
+      div.className = `msg ${cls}`;
+      div.innerHTML = `<strong>${sender}:</strong> ${text}`;
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+    }
+  </script>
+</body>
+</html>""")
+
+# Create supporting files
+with open(f"{base_dir}/.gitignore", "w") as f:
+    f.write("__pycache__/\n*.pyc\n*.pkl\n*.bin\n*.pt\n.cache/\n.env\n")
+
+with open(f"{base_dir}/requirements.txt", "w") as f:
+    f.write("fastapi\nuvicorn\ntransformers\ntorch\nspeechrecognition\npyttsx3\npyaudio\nrequests\n")
+
+with open(f"{base_dir}/README.md", "w") as f:
+    f.write("""# 🛡️ Deepfake Defender – by Team Loop Breakers
+
+An AI-powered system to detect and prevent deepfake-based fraud in enterprise ecosystems like SAP.
+
+## 🔍 Problem
+In 2020, deepfake voice cloning was used to steal $243,000. Today, deepfakes account for 6.5% of fraud attempts. We tackle this threat head-on.
+
+## 💡 Solution
+- Real-time Deepfake Detection API
+- AI Invoice Fraud Scanner
+- Behavioral Biometrics
+- Blockchain Media Registry for verification
+- Voice-enabled assistant powered by DeepSeek Coder
+
+## 🚀 Features
+- 🌐 Web-based interface (FastAPI + HTML)
+- 🎙️ Voice assistant
+- 🤖 GPT-powered code generation
+- 🧠 Extensible deepfake use-case modules
+
+## 🛠️ Run Locally
+
+```bash
+pip install -r requirements.txt
+uvicorn demo.jarvis_server:app --reload
